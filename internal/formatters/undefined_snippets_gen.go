@@ -23,11 +23,11 @@ var snippetHelperFuncs = template.FuncMap{
 }
 
 var undefinedSnippetsTpl = template.Must(template.New("snippets").Funcs(snippetHelperFuncs).Parse(`
-{{ range . }}func {{ .Method }}({{ .Args }}) error {
-	return godog.ErrPending
+{{ range . }}func {{ .Method }}({{ .Args }}) (context.Context, error) {
+	return ctx, test.ErrPending
 }
 
-{{end}}func InitializeScenario(ctx *godog.ScenarioContext) { {{ range . }}
+{{end}}func InitializeScenario(ctx test.ScenarioContext) { {{ range . }}
 	ctx.Step({{ backticked .Expr }}, {{ .Method }}){{end}}
 }
 `))
@@ -70,15 +70,17 @@ func (s undefinedSnippet) Args() (ret string) {
 
 	if s.argument != nil {
 		if s.argument.DocString != nil {
-			args = append(args, "*godog.DocString")
+			args = append(args, "test.DocString")
 		}
 
 		if s.argument.DataTable != nil {
-			args = append(args, "*godog.Table")
+			args = append(args, "test.Table")
 		}
 	}
 
 	var last string
+
+	ret = "ctx context.Context, "
 
 	for i, arg := range args {
 		if last == "" || last == arg {
